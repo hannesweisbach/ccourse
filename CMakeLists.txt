@@ -12,3 +12,4 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 
 add_subdirectory(introduction)
 add_subdirectory(functions-pointers)
+add_subdirectory(network)

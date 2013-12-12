@@ -63,7 +63,7 @@ void handle(int fd, size_t msg_size) {
   }
 
   fprintf(stdout, "Connection request from %s\n",
-          hostname((struct sockaddr *)&addr));
+          hostname((struct sockaddr *)&addr, addrlen));
 
   ssize_t recv_len = echo_recv(client_socket, recv_buf, sizeof(recv_buf));
   if (recv_len < 0)

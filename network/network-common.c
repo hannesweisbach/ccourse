@@ -19,12 +19,12 @@ void server_usage() {
   fprintf(stdout, "                    The default messages size is 1024 bytes.\n");
 }
 
-const char *hostname(struct sockaddr *sa) {
+const char *hostname(struct sockaddr *sa, socklen_t length) {
   static char hbuf[NI_MAXHOST];
   //  static char sbuf[NI_MAXSERV];
 
   int err =
-      getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+      getnameinfo(sa, length, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
   if (err) {
     errstring(gai_strerror(err));
     hbuf[0] = 0;
@@ -33,11 +33,11 @@ const char *hostname(struct sockaddr *sa) {
   return hbuf;
 }
 
-const char *service(struct sockaddr *sa) {
+const char *service(struct sockaddr *sa, socklen_t length) {
   static char sbuf[NI_MAXSERV];
 
   int err =
-      getnameinfo(sa, sa->sa_len, NULL, 0, sbuf, sizeof(sbuf), NI_NUMERICSERV);
+      getnameinfo(sa, length, NULL, 0, sbuf, sizeof(sbuf), NI_NUMERICSERV);
   if (err) {
     errstring(gai_strerror(err));
     sbuf[0] = 0;
@@ -107,7 +107,7 @@ int get_accept_fds(const char *host, const char *port, int **fds) {
   for (struct addrinfo *ai = ais; ai; ai = ai->ai_next) {
     int s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (s < 0) {
-      err2("%s: ", hostname(ai->ai_addr));
+      err2("%s: ", hostname(ai->ai_addr, ai->ai_addrlen));
       continue;
     }
 
@@ -122,7 +122,9 @@ int get_accept_fds(const char *host, const char *port, int **fds) {
       if (listen(s, SOMAXCONN)) {
         err("listen");
       } else {
-        fprintf(stdout, "Listening on %s:%s\n", hostname(ai->ai_addr), service(ai->ai_addr));
+        fprintf(stdout, "Listening on %s:%s\n",
+                hostname(ai->ai_addr, ai->ai_addrlen),
+                service(ai->ai_addr, ai->ai_addrlen));
         fds_[nfds++] = s;
       }
     }
@@ -148,7 +150,7 @@ int open_socket(const char *host, const char *port) {
     }
 
     if (connect(s, ai->ai_addr, ai->ai_addrlen)) {
-      err2("%s", hostname(ai->ai_addr));
+      err2("%s", hostname(ai->ai_addr, ai->ai_addrlen));
       close(s);
       s = -1;
       continue;

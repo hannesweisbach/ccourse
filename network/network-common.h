@@ -21,7 +21,7 @@
 
 void server_usage(void);
 int get_accept_fds(const char *host, const char *port, int **fds);
-int init_fdset(const int *const fds, size_t nfds, struct fd_set *fdset);
+int init_fdset(const int *const fds, size_t nfds, fd_set *fdset);
 struct addrinfo *get_connect_addr(const char *host, const char *port);
 int open_socket(const char *host, const char *port);
 const char * hostname(struct sockaddr * sa);

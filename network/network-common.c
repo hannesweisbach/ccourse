@@ -162,7 +162,7 @@ int open_socket(const char *host, const char *port) {
   return s;
 }
 
-int init_fdset(const int *const fds, size_t nfds, struct fd_set *fdset) {
+int init_fdset(const int *const fds, size_t nfds, fd_set *fdset) {
   int maxfd = INT_MIN;
   FD_ZERO(fdset);
 

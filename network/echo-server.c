@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
   int nfds = get_accept_fds(host, port, &fds);
 
   for (;;) {
-    struct fd_set sockets;
+    fd_set sockets;
     int maxfd = init_fdset(fds, nfds, &sockets);
 
     int ret = select(maxfd + 1, &sockets, NULL, NULL, NULL);

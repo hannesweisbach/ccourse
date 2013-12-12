@@ -120,8 +120,11 @@ int main(int argc, char *argv[]) {
   
   fprintf(stdout, "Message size %zd\n", msg_size);
 
-  sig_t action = signal(SIGPIPE, SIG_IGN);
-  if (action == SIG_ERR) {
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = SIG_IGN;
+  if(sigaction(SIGPIPE, &sa, NULL)) {
     err("signal");
     fprintf(stderr, "Might get SIGPIPE.\n");
   }

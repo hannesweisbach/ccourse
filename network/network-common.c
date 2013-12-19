@@ -115,7 +115,8 @@ int get_accept_fds(const char *host, const char *port, int **fds) {
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     if (bind(s, ai->ai_addr, ai->ai_addrlen)) {
-      err("bind");
+      err2("%s:%s", hostname(ai->ai_addr, ai->ai_addrlen),
+           service(ai->ai_addr, ai->ai_addrlen));
       close(s);
       continue;
     } else {

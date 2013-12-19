@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "network-common.h"
 
@@ -36,7 +37,7 @@ void handle(int fd, const char *msg) {
 
   write(fd, msg, size);
 
-  ssize_t err = read(fd, reply, size);
+  ssize_t err = recv_n(fd, reply, size);
   if (err < 0) {
     err("read");
     return;

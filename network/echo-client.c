@@ -26,7 +26,7 @@ ssize_t recv_n(int fd, unsigned char * buf, size_t bytes) {
     }
   }
   /* protocol guarantees us, that the recv'd msg is zero-terminated */
-  //buf[total - 1] = 0;
+  assert(buf[total - 1] == 0);
   return total;
 }
 

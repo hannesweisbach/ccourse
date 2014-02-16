@@ -6,21 +6,33 @@
 
 #define FIELD_LENGTH 3
 
-const unsigned char NO_PLAYER = ' ';
+const char NO_PLAYER = 0;
 
 struct game {
-  unsigned char field[FIELD_LENGTH * FIELD_LENGTH];
+  char field[FIELD_LENGTH * FIELD_LENGTH];
 };
 
 struct player {
-  unsigned char symbol;
-  int (*move_function)(const struct game * g, const unsigned char player);
+  int (*move_function)(const struct game *g, const char player);
 };
+
+char player2symbol(char player) {
+  switch (player) {
+  case 1:
+    return 'x';
+  case -1:
+    return 'o';
+  case 0:
+    return ' ';
+  default:
+    assert(0);
+  }
+}
 
 void output(const struct game *g) {
   for (ssize_t j = 0; j < FIELD_LENGTH; j++) {
     for (ssize_t i = 0; i < FIELD_LENGTH; i++) {
-      printf("%c%c", g->field[j * FIELD_LENGTH + i],
+      printf("%c%c", player2symbol(g->field[j * FIELD_LENGTH + i]),
              (i < (FIELD_LENGTH - 1)) ? '|' : '\n');
     }
     if (j < (FIELD_LENGTH - 1))
@@ -37,7 +49,7 @@ _Bool valid_move(const struct game * g, size_t field) {
   return ((field < sizeof(g->field)) && (g->field[field] == NO_PLAYER));
 }
 
-unsigned char winner(const struct game *g) {
+char winner(const struct game *g) {
   /* case 1: --- */
   for (size_t j = 0; j < sizeof(g->field); j += FIELD_LENGTH)
     if (g->field[j] != NO_PLAYER && g->field[j] == g->field[j + 1] &&
@@ -62,7 +74,7 @@ unsigned char winner(const struct game *g) {
 
 _Bool game_is_on(const struct game * g) {
   /* no winner yet */
-  if(winner(g) != NO_PLAYER)
+  if(winner(g))
     return 0;
 
   /* still space on board */
@@ -74,31 +86,13 @@ _Bool game_is_on(const struct game * g) {
   return 0;
 }
 
-void do_move(const unsigned char player, const size_t move,
+void do_move(const char player, const size_t move,
              struct game *g) {
   g->field[move] = player;
 }
 
-unsigned char other_player(unsigned char player) {
-  assert(player == 'x' || player == 'o');
-#if 0
-  if(player == 'x')
-    return 'o';
-  else
-    return 'x';
-#else
-  return (player == 'x') ? 'o' : 'x';
-#endif
-}
-
 int evaluate(const struct game *game, const char player) {
-  if (winner(game) == player) {
-    return 1;
-  } else if (winner(game) == ' ') {
-    return 0;
-  } else {
-    return -1;
-  }
+  return player * winner(game);
 }
 
 int miniMax(const struct game *game, const char player, int depth,
@@ -113,7 +107,7 @@ int miniMax(const struct game *game, const char player, int depth,
     struct game copy_ = *game;
     do_move(player, move, &copy_);
     int wert =
-        -miniMax(&copy_, (player == 'x') ? 'o' : 'x', depth + 1, best_move);
+        -miniMax(&copy_, -1 * player, depth + 1, best_move);
     if (wert > maxWert) {
       maxWert = wert;
       if (depth == 0)
@@ -123,9 +117,9 @@ int miniMax(const struct game *game, const char player, int depth,
   return maxWert;
 }
 
-int get_move(const struct game * g, const unsigned char player) {
+int get_move(const struct game * g, const char player) {
   output(g);
-  printf("Zug für Spieler '%c'?: ", player);
+  printf("Zug für Spieler '%c'?: ", player2symbol(player));
   fflush(stdout);
   int move = -1;
   scanf("%d", &move);
@@ -133,14 +127,14 @@ int get_move(const struct game * g, const unsigned char player) {
 }
 
 
-int get_smart_computer_move(const struct game * g, const unsigned char player) {
+int get_smart_computer_move(const struct game * g, const char player) {
   size_t best_move = 0;
   miniMax(g, player, 0, &best_move);
   return best_move;
 }
 
 
-int get_computer_move(const struct game * g, const unsigned char player) {
+int get_computer_move(const struct game * g, const char player) {
   (void)(player);
   for(size_t move = 0; move < sizeof(g->field); move++)
     if(valid_move(g, move))
@@ -150,32 +144,32 @@ int get_computer_move(const struct game * g, const unsigned char player) {
 }
 
 int main() {
-  struct game g = {
-    .field = { 'x', 'o', ' ', 'j', 'k', 'l', 'x', 'x', 'x' }};
+  struct game g;
   make_clear(&g);
 
-#if 1
-  struct player players[] = { { 'x', &get_move }, { 'o', &get_smart_computer_move } };
+#if 0
+  struct player players[] = { { &get_move }, { &get_smart_computer_move } };
 #else
-  struct player players[] = { { 'x', &get_smart_computer_move },
-                              { 'o', &get_smart_computer_move } };
+  struct player players[] = { {  &get_smart_computer_move },
+                              {  &get_smart_computer_move } };
 #endif
-  size_t player_idx = 0;
+  char player_idx = 1;
   while(game_is_on(&g)) {
-    struct player * player = &players[player_idx & 1];
-    size_t move = player->move_function(&g, player->symbol);
+    struct player * player = &players[player_idx < 0];
+    size_t move = player->move_function(&g, player_idx);
     if(valid_move(&g, move)) {
-      do_move(player->symbol, move, &g);
+      do_move(player_idx, move, &g);
     } else {
-      printf("Move %zd of player %c is invalid. Game lost.\n", move, player->symbol);
+      printf("Move %zd of player %c is invalid. Game lost.\n", move,
+             player2symbol(player_idx));
       return -1;
     }
-    if(winner(&g) != NO_PLAYER) {
-      printf("Player %c has won.\n", player->symbol);
+    if(winner(&g)) {
+      printf("Player %c has won.\n", player2symbol(player_idx));
       output(&g);
       return 0;
     }
-    player_idx++;
+    player_idx *= -1;
   }
   printf("Tie.\n");
   output(&g);
